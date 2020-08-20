@@ -19,7 +19,7 @@ RUN python3 -m venv env
 RUN ./env/bin/pip install wheel
 RUN ./env/bin/pip install ./pensieve-agent
 RUN mkdir pensieve
-RUN echo "export PATH=/home/tester/env/bin:$PATH" >> ~/.bash_profile
+RUN echo "export PATH=/home/tester/env/bin:$PATH" >> ~/.bashrc
 USER root
 # create privilege separation directory
 RUN mkdir /run/sshd

@@ -1,3 +1,4 @@
+import datetime
 import subprocess
 import pathlib
 import tempfile
@@ -8,11 +9,10 @@ from behave import fixture, use_fixture
 import yaml
 
 
-DOCKER_DIRECTORY = pathlib.Path(__file__).parent / '../../docker'
+DOCKER_DIRECTORY = pathlib.Path(__file__).parent / "../../docker"
 
 
 class Client:
-
     def __init__(self, path):
         self.path = path
 
@@ -22,40 +22,43 @@ class Client:
 
 @fixture
 def client_fixture(context):
-    tempdir = tempfile.TemporaryDirectory(suffix='pensieve-test-client')
-    temp_path = pathlib.Path(tempdir.name) / 'pensieve'
+    tempdir = tempfile.TemporaryDirectory(suffix="pensieve-test-client")
+    temp_path = pathlib.Path(tempdir.name) / "pensieve"
     temp_path.mkdir()
 
     config_yaml = textwrap.dedent(
-    f"""
+        f"""
     stores:
         home:
             type: pensieve
             config:
-                host: 0.0.0.0
-                port: {context.server.port}
-                user: eldridge
-                path: /mnt/dc/pensieve/personal
+                host: tester@0.0.0.0:{context.server.port}
+                path: /home/tester/pensieve
         github:
             type: github
             config:
                 user: pensieve-test-user
-    """)
+    """
+    )
 
-    with (temp_path / '.pensieve.yaml').open('w') as fileobj:
+    with (temp_path / ".pensieve.yaml").open("w") as fileobj:
         fileobj.write(config_yaml)
 
     # set up the client's GIT SSH settings so that no password is required
-    os.environ['GIT_SSH_COMMAND'] = (
-            f'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null '
-            f'-i {DOCKER_DIRECTORY}/id_rsa'
+    os.environ["GIT_SSH_COMMAND"] = (
+        f"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "
+        f"-i {DOCKER_DIRECTORY}/id_rsa"
+    )
+
+    os.environ["PENSIEVE_SSH_OPTIONS"] = (
+        f"-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "
+        f"-i {DOCKER_DIRECTORY}/id_rsa"
     )
 
     yield Client(temp_path)
 
 
 class PensieveServer:
-
     def __init__(self, path, container_id, host, port):
         # path to the server's temporary pensieve
         self.path = path
@@ -66,9 +69,17 @@ class PensieveServer:
 
     def run(self, cmd, check=True):
         ssh_cmd = [
-            'ssh', '-o', 'StrictHostKeyChecking=no', '-o', 'UserKnownHostsFile=/dev/null', 
-            f'tester@{self.host}', '-p', self.port, '-i', str(DOCKER_DIRECTORY / 'id_rsa'),
-            cmd
+            "ssh",
+            "-o",
+            "StrictHostKeyChecking=no",
+            "-o",
+            "UserKnownHostsFile=/dev/null",
+            f"tester@{self.host}",
+            "-p",
+            self.port,
+            "-i",
+            str(DOCKER_DIRECTORY / "id_rsa"),
+            cmd,
         ]
         return subprocess.run(ssh_cmd, capture_output=True, check=check)
 
@@ -79,24 +90,30 @@ def pensieve_server_fixture(context):
     # build the docker image, if it hasn't already been built
     # name it 'pensieve-test-server'
     subprocess.run(
-        ['docker', 'build', '.', '-t', 'pensieve-test-server'],
-        cwd=pathlib.Path(__file__).parent / '../../docker',
-        check=True, capture_output=True
-        )
+        ["docker", "build", ".", "-t", "pensieve-test-server"],
+        cwd=pathlib.Path(__file__).parent / "../../docker",
+        check=True,
+        capture_output=True,
+    )
 
     # create a temporary directory for the pensieve
-    tempdir = tempfile.TemporaryDirectory(suffix='pensieve-test-pensieve-server')
-    temp_path = pathlib.Path(tempdir.name) / 'pensieve'
+    tempdir = tempfile.TemporaryDirectory(suffix="pensieve-test-pensieve-server")
+    temp_path = pathlib.Path(tempdir.name) / "pensieve"
     temp_path.mkdir()
 
     # create and run the container
     result = subprocess.run(
         [
-            'docker', 'run', '-d', '-P',
-            '--mount', f'type=bind,source={temp_path},dst=/home/tester/pensieve',
-            'pensieve-test-server'
+            "docker",
+            "run",
+            "-d",
+            "-P",
+            "--mount",
+            f"type=bind,source={temp_path},dst=/home/tester/pensieve",
+            "pensieve-test-server",
         ],
-        capture_output=True, check=True
+        capture_output=True,
+        check=True,
     )
 
     # the container ID is returned
@@ -104,46 +121,61 @@ def pensieve_server_fixture(context):
 
     # but we also want the port
     result = subprocess.run(
-        ['docker', 'port', container_id, '22'], 
-        capture_output=True, check=True
+        ["docker", "port", container_id, "22"], capture_output=True, check=True
     )
 
     # the port is displayed in the form 0.0.0.0:port
-    host, port = result.stdout.decode().strip().split(':')
+    host, port = result.stdout.decode().strip().split(":")
 
     yield PensieveServer(temp_path, container_id, host, port)
 
     # kill the container
-    subprocess.run(['docker', 'kill', container_id])
+    subprocess.run(["docker", "kill", container_id])
 
 
-@given('the home store has repos {names}.')
+# pylint: disable=function-redefined,undefined-variable
+@given("the home store has repos {names}.")
 def step_impl(context, names):
     context.server = use_fixture(pensieve_server_fixture, context)
-    names = [n.strip().strip('"') for n in names.split(',')]
-    cmd = './initialize_repositories.sh ' + " ".join(names)
+    names = [n.strip().strip('"') for n in names.split(",")]
+    cmd = "./initialize_repositories.sh " + " ".join(names)
     context.server.run(cmd)
 
 
-@when('the user invokes')
+@when("the user invokes")
 def step_impl(context):
     context.client = use_fixture(client_fixture, context)
     command = context.text.strip()
     context.proc = subprocess.run(
-            command, shell=True, stdout=subprocess.PIPE, 
-            stderr=subprocess.STDOUT, cwd=str(context.client.path))
+        command,
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=str(context.client.path),
+    )
 
 
-@then('the output is')
+@then("the output is")
 def step_impl(context):
     output = context.proc.stdout.decode()
     assert context.text == output, (context.text, output)
 
 
-@then('the repository "{name}" exists on the client.')
-def step_impl(context, name):
-    msg = 'The repo "{}" does not exist on the client.'.format(name)
-    entries = [f.name for f in context.client.path.iterdir() if f.is_dir()]
+@then('the repository "{name}" exists on the {where}.')
+def step_impl(context, name, where):
+    inst = {"client": context.client, "home store": context.server}[where]
+
+    msg = f'The repo "{name}" does not exist on the {where}.'
+    entries = [f.name for f in inst.path.iterdir() if f.is_dir()]
     if entries:
-        msg += 'The repositories that *do* exist are:\n' + '\n'.join(entries)
-    assert (context.client.path / name).is_dir(), msg
+        msg += "The repositories that *do* exist are:\n" + "\n".join(entries)
+    assert (inst.path / name).is_dir(), msg
+
+
+@then('the repository "{name}" with prepended date exists on the {where}.')
+def step_impl(context, name, where):
+    today = datetime.date.today()
+    prefix = today.strftime("%Y-%m-%d")
+    name = "__" + prefix + "__" + name
+    step = 'then the repository "{}" exists on the {}.'.format(name, where)
+    context.execute_steps(step)
