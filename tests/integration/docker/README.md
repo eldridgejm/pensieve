@@ -10,3 +10,6 @@ to the container. It is recommended that you use something like this to squelch
 the prompt about accessing an unknown system:
 
     ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null tester@0.0.0.0 -p <port> -i id_rsa
+
+And if you're reading this thinking that you've discovered an unprotected private key
+to my personal server full of my financial information, sorry... but this ain't it.
