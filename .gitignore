@@ -1,0 +1,4 @@
+__pycache__
+pensieve.egg-info
+env
+.pytest_cache
