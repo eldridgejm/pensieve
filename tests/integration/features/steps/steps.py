@@ -1,6 +1,7 @@
 import datetime
 import subprocess
 import pathlib
+import json
 import tempfile
 import os
 import textwrap
@@ -10,6 +11,11 @@ import yaml
 
 
 DOCKER_DIRECTORY = pathlib.Path(__file__).parent / "../../docker"
+
+
+def process_name_list(names):
+    """Process a string like "foo, bar, baz" into a list of strings."""
+    return [n.strip().strip('"') for n in names.split(",")]
 
 
 class Client:
@@ -133,13 +139,27 @@ def pensieve_server_fixture(context):
     subprocess.run(["docker", "kill", container_id])
 
 
+
 # pylint: disable=function-redefined,undefined-variable
 @given("the home store has repos {names}.")
 def step_impl(context, names):
     context.server = use_fixture(pensieve_server_fixture, context)
-    names = [n.strip().strip('"') for n in names.split(",")]
+    names = process_name_list(names)
     cmd = "./initialize_repositories.sh " + " ".join(names)
     context.server.run(cmd)
+
+
+@given("the home store has repos {names} with metadata")
+def step_impl(context, names):
+    step = f'Given the home store has repos {names}.'
+    context.execute_steps(step)
+
+    # read the metadata
+    meta = json.loads(context.text.strip())
+
+    for name in process_name_list(names):
+        with (context.server.path / name / 'meta.json').open('w') as fileobj:
+            json.dump(meta, fileobj)
 
 
 @when("the user invokes")

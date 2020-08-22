@@ -64,6 +64,10 @@ def cmd_clone(args, config):
         print('Cloned repository "foo".')
 
 
+def cmd_list(args, config):
+    pass
+
+
 def main():
 
     parser = argparse.ArgumentParser()
@@ -79,6 +83,9 @@ def main():
     new_parser.add_argument("repository_name")
     new_parser.add_argument("--date", action="store_true")
     new_parser.set_defaults(cmd=cmd_new)
+
+    list_parser = subparsers.add_parser('list')
+    list_parser.set_defaults(cmd=cmd_list)
 
     args = parser.parse_args()
 
