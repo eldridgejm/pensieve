@@ -52,7 +52,6 @@ def cmd_new(args, config):
 
 
 def cmd_clone(args, config):
-    args.store = "home"
     host = config["stores"][args.store]["config"]["host"]
     path = config["stores"][args.store]["config"]["path"]
 
@@ -71,6 +70,7 @@ def main():
     subparsers = parser.add_subparsers()
 
     clone_parser = subparsers.add_parser("clone")
+    clone_parser.add_argument('store')
     clone_parser.add_argument("repository_name")
     clone_parser.set_defaults(cmd=cmd_clone)
 

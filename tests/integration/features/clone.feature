@@ -4,7 +4,7 @@ Feature: Clone a repository
         Given the home store has repos "foo", "bar", "baz".
         When the user invokes
             """
-            pensieve clone foo
+            pensieve clone home foo
             """
         Then the output is
             """
@@ -17,7 +17,7 @@ Feature: Clone a repository
         Given the home store has repos "foo", "bar", "baz".
         When the user invokes
             """
-            pensieve clone steve
+            pensieve clone home steve
             """
         Then the output is
             """
