@@ -16,7 +16,7 @@ WORKDIR /home/tester
 ADD id_rsa.pub .ssh/authorized_keys
 # install the repo agent
 RUN git clone https://github.com/eldridgejm/pensieve-agent
-RUN wget https://github.com/eldridgejm/pensieve-agent/archive/bd42cdc844c1c06ddc32967bb37c1fb7b033afa8.tar.gz -O pensieve-agent.tar.gz &&\
+RUN wget https://github.com/eldridgejm/pensieve-agent/archive/bcc550ae1c7fcdd709ab72f70d2cf6e941cd39b5.tar.gz -O pensieve-agent.tar.gz &&\
     tar xvf pensieve-agent.tar.gz
 RUN python3 -m venv env
 RUN ./env/bin/pip install wheel

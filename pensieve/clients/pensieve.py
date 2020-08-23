@@ -65,7 +65,7 @@ class PensieveClient(ClientABC):
         response = self._communicate_over_ssh(message)
 
         if response["error"]["code"]:
-            raise exceptions.CommandError(response["error"]["msg"])
+            raise exceptions.ClientError(response["error"]["msg"])
 
         return response["data"]
 
@@ -84,13 +84,13 @@ class PensieveClient(ClientABC):
         if proc.returncode:
             raise exceptions.CloneError(repo_name)
 
-    def new(self, repo_name):
+    def new(self, repo_name, cwd):
         self._invoke('new', {'name': repo_name})
 
     def list(self):
-        Repository = collections.namedtuple('Repository', 'name description tags')
+        Repository = collections.namedtuple('Repository', 'name description topics')
         repositories = []
         for name, meta in self._invoke('list').items():
-            repo = Repository(name, meta['description'], sorted(meta['tags']))
+            repo = Repository(name, meta['description'], sorted(meta['topics']))
             repositories.append(repo)
         return repositories

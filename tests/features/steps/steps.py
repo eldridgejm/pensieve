@@ -10,7 +10,12 @@ from behave import fixture, use_fixture
 import yaml
 
 
-DOCKER_DIRECTORY = pathlib.Path(__file__).parent / "../../docker"
+TESTS_DIRECTORY = pathlib.Path(__file__).parent.parent.parent
+DOCKER_DIRECTORY = TESTS_DIRECTORY / 'docker'
+
+
+with (TESTS_DIRECTORY / 'secrets.yaml').open() as fileobj:
+    SECRETS = yaml.load(fileobj, Loader=yaml.Loader)
 
 
 def process_name_list(names):
@@ -42,6 +47,7 @@ def client_fixture(context):
         github:
             type: github
             user: pensieve-test-user
+            token: {SECRETS['github_token']}
     """
     )
 
