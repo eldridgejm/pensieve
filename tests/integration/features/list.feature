@@ -6,7 +6,7 @@ Feature: List the remote repositories
             {
             "foo": {"tags": ["research"], "description": "This is foo."},
             "bar": {"tags": ["teaching", "research"], "description": "This is bar."},
-            "baz": {"tags": [], "description": 2}
+            "baz": {"tags": [], "description": null}
             }
             """
         When the user invokes
@@ -18,11 +18,12 @@ Feature: List the remote repositories
             """
             bar :: home
                 description: This is bar.
-                tags: {research, teaching}
+                tags: research, teaching
             baz :: home
                 description: None
                 tags: None
             foo :: home
                 description: This is foo.
-                tags: {research}    
+                tags: research
+
             """

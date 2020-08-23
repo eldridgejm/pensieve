@@ -37,13 +37,11 @@ def client_fixture(context):
     stores:
         home:
             type: pensieve
-            config:
-                host: tester@0.0.0.0:{context.server.port}
-                path: /home/tester/pensieve
+            host: tester@0.0.0.0:{context.server.port}
+            path: /home/tester/pensieve
         github:
             type: github
-            config:
-                user: pensieve-test-user
+            user: pensieve-test-user
     """
     )
 
@@ -159,7 +157,7 @@ def step_impl(context, names):
 
     for name in process_name_list(names):
         with (context.server.path / name / 'meta.json').open('w') as fileobj:
-            json.dump(meta, fileobj)
+            json.dump(meta[name], fileobj)
 
 
 @when("the user invokes")

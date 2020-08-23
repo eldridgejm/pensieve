@@ -1,5 +1,6 @@
 FROM debian:latest
 RUN apt-get update && apt-get install -y\
+    wget\
     build-essential\
     openssl\
     python3\
@@ -15,6 +16,8 @@ WORKDIR /home/tester
 ADD id_rsa.pub .ssh/authorized_keys
 # install the repo agent
 RUN git clone https://github.com/eldridgejm/pensieve-agent
+RUN wget https://github.com/eldridgejm/pensieve-agent/archive/bd42cdc844c1c06ddc32967bb37c1fb7b033afa8.tar.gz -O pensieve-agent.tar.gz &&\
+    tar xvf pensieve-agent.tar.gz
 RUN python3 -m venv env
 RUN ./env/bin/pip install wheel
 RUN ./env/bin/pip install ./pensieve-agent

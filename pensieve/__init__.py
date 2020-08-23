@@ -42,8 +42,8 @@ def cmd_new(args, config):
         args.repository_name = HIGHLIGHT + prefix + HIGHLIGHT + args.repository_name
 
     client = PensieveClient(
-        "ssh://" + config["stores"][args.store]["config"]["host"],
-        config["stores"][args.store]["config"]["path"],
+        "ssh://" + config["stores"][args.store]["host"],
+        config["stores"][args.store]["path"],
     )
     client.new(args.repository_name)
 
@@ -52,8 +52,8 @@ def cmd_new(args, config):
 
 
 def cmd_clone(args, config):
-    host = config["stores"][args.store]["config"]["host"]
-    path = config["stores"][args.store]["config"]["path"]
+    host = config["stores"][args.store]["host"]
+    path = config["stores"][args.store]["path"]
 
     client = PensieveClient(f"ssh://{host}", path)
     try:
@@ -65,7 +65,15 @@ def cmd_clone(args, config):
 
 
 def cmd_list(args, config):
-    pass
+    for store, config in config['stores'].items():
+        if config['type'] == 'pensieve':
+            client = PensieveClient(f"ssh://{config['host']}", config["path"])
+            repos_on_store = client.list()
+            for repo in sorted(repos_on_store):
+                tags = ', '.join(repo.tags) if repo.tags else 'None'
+                print(f'{repo.name} :: {store}')
+                print(f'    description: {repo.description}')
+                print(f'    tags: {tags}')
 
 
 def main():

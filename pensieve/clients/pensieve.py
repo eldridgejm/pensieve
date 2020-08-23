@@ -1,6 +1,7 @@
 import os
 import json
 import subprocess
+import collections
 
 from .abc import ClientABC
 from .. import exceptions
@@ -39,12 +40,13 @@ class PensieveClient(ClientABC):
         )
 
         result = proc.stdout.decode().strip()
+        result_err = proc.stderr.decode().strip()
 
         if proc.returncode:
             if "No such file" in result:
                 err = 'The server has no pensieve "{}".'.format(self.path)
             else:
-                err = "Connection failed with error: {}".format(result)
+                err = "Connection failed with error: {}".format(result + result_err)
             raise exceptions.Error(err)
 
         try:
@@ -55,7 +57,7 @@ class PensieveClient(ClientABC):
             err += "\nReceived: {}".format(result)
             raise exceptions.Error(err)
 
-    def invoke(self, command, data=None):
+    def _invoke(self, command, data=None):
         if data is None:
             data = {}
 
@@ -83,4 +85,12 @@ class PensieveClient(ClientABC):
             raise exceptions.CloneError(repo_name)
 
     def new(self, repo_name):
-        self.invoke('new', {'name': repo_name})
+        self._invoke('new', {'name': repo_name})
+
+    def list(self):
+        Repository = collections.namedtuple('Repository', 'name description tags')
+        repositories = []
+        for name, meta in self._invoke('list').items():
+            repo = Repository(name, meta['description'], sorted(meta['tags']))
+            repositories.append(repo)
+        return repositories
