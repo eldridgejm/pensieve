@@ -11,9 +11,11 @@ RUN apt-get update && apt-get install -y\
 WORKDIR /root
 RUN useradd tester -m -s /bin/bash
 RUN echo tester:testing | chpasswd
+RUN mkdir /home/tester/.ssh
+COPY id_rsa.pub /home/tester/.ssh/authorized_keys
+RUN chown -R tester /home/tester/.ssh
 USER tester
 WORKDIR /home/tester
-ADD id_rsa.pub .ssh/authorized_keys
 # install the repo agent
 RUN git clone https://github.com/eldridgejm/pensieve-agent
 RUN wget https://github.com/eldridgejm/pensieve-agent/archive/bcc550ae1c7fcdd709ab72f70d2cf6e941cd39b5.tar.gz -O pensieve-agent.tar.gz &&\
