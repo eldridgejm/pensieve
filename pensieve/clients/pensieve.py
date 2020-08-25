@@ -168,7 +168,7 @@ class PensieveClient(ClientABC):
                 f'Could not clone the repository "{repo_name}" from the server.'
             )
 
-    def new(self, repo_name, cwd):
+    def new(self, repo_name):
         """Create a new repository on the store.
 
         Arguments
