@@ -44,6 +44,7 @@ def client_fixture(context):
             type: pensieve
             host: tester@0.0.0.0:{context.server.port}
             path: /home/tester/pensieve
+            agent: /home/tester/env/bin/_pensieve-agent
         github:
             type: github
             user: pensieve-test-user

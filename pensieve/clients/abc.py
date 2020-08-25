@@ -7,6 +7,11 @@ including: cloning repos, creating new repos, listing all of the repos, etc.
 
 
 import abc
+import collections
+
+
+# a simple data container for repository information
+RepositoryMetadata = collections.namedtuple("Repository", "name description topics")
 
 
 class ClientABC(abc.ABC):
@@ -50,7 +55,7 @@ class ClientABC(abc.ABC):
 
         Returns
         -------
-        List[Repository]
+        List[RepositoryMetadata]
             A list of Repository objects, each with `.name`, `.description`,
             and `.topics` attributes.
 

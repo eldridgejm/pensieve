@@ -40,6 +40,7 @@ def cmd_new(args, config):
     client = PensieveClient(
         "ssh://" + config["stores"][args.store]["host"],
         config["stores"][args.store]["path"],
+        config["stores"][args.store]["agent"]
     )
     client.new(args.repository_name, args.cwd)
 
@@ -50,8 +51,9 @@ def cmd_new(args, config):
 def cmd_clone(args, config):
     host = config["stores"][args.store]["host"]
     path = config["stores"][args.store]["path"]
+    agent = config["stores"][args.store]["agent"]
 
-    client = PensieveClient(f"ssh://{host}", path)
+    client = PensieveClient(f"ssh://{host}", path, agent)
     try:
         client.clone(args.repository_name, args.cwd)
     except exceptions.ClientError as exc:
@@ -65,7 +67,7 @@ def cmd_list(args, config_file):
         config = config_file['stores'][store]
 
         if config['type'] == 'pensieve':
-            client = PensieveClient(f"ssh://{config['host']}", config["path"])
+            client = PensieveClient(f"ssh://{config['host']}", config["path"], config["agent"])
         elif config['type'] == 'github':
             client = GitHubClient(config['user'], config['token'])
 
