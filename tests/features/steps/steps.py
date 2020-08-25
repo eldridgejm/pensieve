@@ -11,10 +11,10 @@ import yaml
 
 
 TESTS_DIRECTORY = pathlib.Path(__file__).parent.parent.parent
-DOCKER_DIRECTORY = TESTS_DIRECTORY / 'docker'
+DOCKER_DIRECTORY = TESTS_DIRECTORY / "docker"
 
 
-with (TESTS_DIRECTORY / 'secrets.yaml').open() as fileobj:
+with (TESTS_DIRECTORY / "secrets.yaml").open() as fileobj:
     SECRETS = yaml.load(fileobj, Loader=yaml.Loader)
 
 
@@ -144,7 +144,6 @@ def pensieve_server_fixture(context):
     subprocess.run(["docker", "kill", container_id])
 
 
-
 # pylint: disable=function-redefined,undefined-variable
 @given("the home store has repos {names}.")
 def step_impl(context, names):
@@ -156,14 +155,14 @@ def step_impl(context, names):
 
 @given("the home store has repos {names} with metadata")
 def step_impl(context, names):
-    step = f'Given the home store has repos {names}.'
+    step = f"Given the home store has repos {names}."
     context.execute_steps(step)
 
     # read the metadata
     meta = json.loads(context.text.strip())
 
     for name in process_name_list(names):
-        with (context.server.path / name / 'meta.json').open('w') as fileobj:
+        with (context.server.path / name / "meta.json").open("w") as fileobj:
             json.dump(meta[name], fileobj)
 
 

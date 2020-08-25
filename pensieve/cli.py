@@ -35,12 +35,14 @@ def cmd_new(args, config):
     if args.date:
         today = datetime.date.today()
         prefix = today.strftime(settings.DATE_FORMAT)
-        args.repository_name = settings.HIGHLIGHT + prefix + settings.HIGHLIGHT + args.repository_name
+        args.repository_name = (
+            settings.HIGHLIGHT + prefix + settings.HIGHLIGHT + args.repository_name
+        )
 
     client = PensieveClient(
         "ssh://" + config["stores"][args.store]["host"],
         config["stores"][args.store]["path"],
-        config["stores"][args.store]["agent"]
+        config["stores"][args.store]["agent"],
     )
     client.new(args.repository_name, args.cwd)
 
@@ -63,20 +65,22 @@ def cmd_clone(args, config):
 
 
 def cmd_list(args, config_file):
-    for store in sorted(config_file['stores']):
-        config = config_file['stores'][store]
+    for store in sorted(config_file["stores"]):
+        config = config_file["stores"][store]
 
-        if config['type'] == 'pensieve':
-            client = PensieveClient(f"ssh://{config['host']}", config["path"], config["agent"])
-        elif config['type'] == 'github':
-            client = GitHubClient(config['user'], config['token'])
+        if config["type"] == "pensieve":
+            client = PensieveClient(
+                f"ssh://{config['host']}", config["path"], config["agent"]
+            )
+        elif config["type"] == "github":
+            client = GitHubClient(config["user"], config["token"])
 
         repos_on_store = client.list()
         for repo in sorted(repos_on_store):
-            topics = ', '.join(repo.topics) if repo.topics else 'None'
-            print(f'{repo.name} :: {store}')
-            print(f'    description: {repo.description}')
-            print(f'    topics: {topics}')
+            topics = ", ".join(repo.topics) if repo.topics else "None"
+            print(f"{repo.name} :: {store}")
+            print(f"    description: {repo.description}")
+            print(f"    topics: {topics}")
 
 
 def main():
@@ -85,7 +89,7 @@ def main():
     subparsers = parser.add_subparsers()
 
     clone_parser = subparsers.add_parser("clone")
-    clone_parser.add_argument('store')
+    clone_parser.add_argument("store")
     clone_parser.add_argument("repository_name")
     clone_parser.set_defaults(cmd=cmd_clone)
 
@@ -95,7 +99,7 @@ def main():
     new_parser.add_argument("--date", action="store_true")
     new_parser.set_defaults(cmd=cmd_new)
 
-    list_parser = subparsers.add_parser('list')
+    list_parser = subparsers.add_parser("list")
     list_parser.set_defaults(cmd=cmd_list)
 
     args = parser.parse_args()

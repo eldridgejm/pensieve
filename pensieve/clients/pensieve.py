@@ -134,7 +134,6 @@ class PensieveClient(ClientABC):
 
         return response["data"]
 
-
     def clone(self, repo_name, cwd):
         """Clone the repository into the current working directory.
 
