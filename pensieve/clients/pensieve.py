@@ -7,9 +7,11 @@ from .abc import ClientABC
 from .. import exceptions
 
 
-AGENT_COMMAND = os.getenv("PENSIEVE_AGENT_COMMAND", "/home/tester/env/bin/_pensieve-agent")
+AGENT_COMMAND = os.getenv(
+    "PENSIEVE_AGENT_COMMAND", "/home/tester/env/bin/_pensieve-agent"
+)
 CONNECTION_TIMEOUT = os.getenv("PENSIEVE_TIMEOUT", 5)
-SSH_OPTIONS = os.getenv("PENSIEVE_SSH_OPTIONS", '')
+SSH_OPTIONS = os.getenv("PENSIEVE_SSH_OPTIONS", "")
 
 
 class PensieveClient(ClientABC):
@@ -18,14 +20,15 @@ class PensieveClient(ClientABC):
         self.path = path
 
     def _communicate_over_ssh(self, message, agent_command=AGENT_COMMAND):
-        server, port = self.host.rsplit(':', 1)
+        server, port = self.host.rsplit(":", 1)
         remote_command = "cd {} && {}".format(self.path, agent_command)
         ssh_command = [
             "ssh",
             "-o",
             "ConnectTimeout={}".format(CONNECTION_TIMEOUT),
             *SSH_OPTIONS.split(),
-            '-p', port,
+            "-p",
+            port,
             server,
             'bash -c "{}"'.format(remote_command),
         ]
@@ -82,15 +85,17 @@ class PensieveClient(ClientABC):
         )
 
         if proc.returncode:
-            raise exceptions.CloneError(repo_name)
+            raise exceptions.ClientError(
+                f'Could not clone the repository "{repo_name}" from the server.'
+            )
 
     def new(self, repo_name, cwd):
-        self._invoke('new', {'name': repo_name})
+        self._invoke("new", {"name": repo_name})
 
     def list(self):
-        Repository = collections.namedtuple('Repository', 'name description topics')
+        Repository = collections.namedtuple("Repository", "name description topics")
         repositories = []
-        for name, meta in self._invoke('list').items():
-            repo = Repository(name, meta['description'], sorted(meta['topics']))
+        for name, meta in self._invoke("list").items():
+            repo = Repository(name, meta["description"], sorted(meta["topics"]))
             repositories.append(repo)
         return repositories

@@ -54,7 +54,7 @@ def cmd_clone(args, config):
     client = PensieveClient(f"ssh://{host}", path)
     try:
         client.clone(args.repository_name, args.cwd)
-    except exceptions.CloneError as exc:
+    except exceptions.ClientError as exc:
         print(str(exc))
     else:
         print('Cloned repository "foo".')
