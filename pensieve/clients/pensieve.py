@@ -11,7 +11,7 @@ import subprocess
 import collections
 
 from .abc import ClientABC, RepositoryMetadata
-from .. import exceptions
+from ..exceptions import ClientError
 
 
 # how long to wait until the SSH connection is considered dead.
@@ -37,18 +37,55 @@ class PensieveClient(ClientABC):
         envvar PENSIEVE_AGENT_COMMAND is set, it will be used instead.
 
     """
+
     def __init__(self, host, path, agent):
         self.host = host
         self.path = path
 
-        agent_envvar = os.getenv('PENSIEVE_AGENT_COMMAND')
+        agent_envvar = os.getenv("PENSIEVE_AGENT_COMMAND")
         if agent_envvar is not None:
             self.agent = agent_envvar
         else:
             self.agent = agent
 
-    def _communicate_json_over_ssh(self, message):
-        """Send a JSON message over SSH."""
+    def _invoke(self, command, data=None):
+        """Invoke a pensieve-agent command on the remote server.
+
+        Arguments
+        ---------
+        command : str
+            The command that will be invoked on the remote agent.
+        data : dict
+            A dictionary of data that will be passed to the command.
+
+
+        Returns
+        -------
+        dict
+            A dictionary of the data returned by the pensieve agent.
+
+        Notes
+        -----
+        For information about what commands are available, and their inputs/outputs,
+        see the documentation for pensieve-agent.
+
+        """
+        # A pensieve agent is a binary on a remote server which manages a store.
+        # It accepts its input as JSON via STDIN, and responds with JSON to
+        # STDOUT. We communicate with the agent over SSH by sending it a payload.
+        # The payload should be a dictionary with a "command" field and a "data"
+        # field. The response of the agent is a JSON dictionary.  It will have
+        # two fields: "data" and "error". The "error" field will also have "code"
+        # and "msg" subfields. See pensieve-agent for their meanings.
+
+        if data is None:
+            data = {}
+
+        # construct the payload as a JSON string
+        payload = {"command": command, "data": data}
+        payload_as_json = json.dumps(payload).encode()
+
+        # construct the command line to run SSH and the command on the server
         server, port = self.host.rsplit(":", 1)
         remote_command = "cd {} && {}".format(self.path, self.agent)
         ssh_command = [
@@ -62,45 +99,41 @@ class PensieveClient(ClientABC):
             'bash -c "{}"'.format(remote_command),
         ]
 
-        message_string = json.dumps(message).encode()
-
+        # run that command
         proc = subprocess.run(
             ssh_command,
-            input=message_string,
+            input=payload_as_json,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
 
+        # get the raw string output of the command
         result = proc.stdout.decode().strip()
         result_err = proc.stderr.decode().strip()
 
+        # if the process failed...
         if proc.returncode:
             if "No such file" in result:
                 err = 'The server has no pensieve "{}".'.format(self.path)
             else:
                 err = "Connection failed with error: {}".format(result + result_err)
-            raise exceptions.Error(err)
+            raise ClientError(err)
 
+        # decode the response from JSON into a dictionary
         try:
-            return json.loads(result)
+            response = json.loads(result)
         except json.JSONDecodeError:
             err = "Problem decoding when communicating JSON over SSH."
-            err += "\nSent: {}".format(message_string)
+            err += "\nSent: {}".format(payload_as_json)
             err += "\nReceived: {}".format(result)
-            raise exceptions.Error(err)
+            raise ClientError(err)
 
-    def _invoke(self, command, data=None):
-        """Invoke a command on the remote server by sending and receiving JSON data."""
-        if data is None:
-            data = {}
-
-        message = {"command": command, "data": data}
-        response = self._communicate_json_over_ssh(message)
-
+        # did the remote agent send back an error?
         if response["error"]["code"]:
-            raise exceptions.ClientError(response["error"]["msg"])
+            raise ClientError(response["error"]["msg"])
 
         return response["data"]
+
 
     def clone(self, repo_name, cwd):
         """Clone the repository into the current working directory.
@@ -129,7 +162,7 @@ class PensieveClient(ClientABC):
         )
 
         if proc.returncode:
-            raise exceptions.ClientError(
+            raise ClientError(
                 f'Could not clone the repository "{repo_name}" from the server.'
             )
 
