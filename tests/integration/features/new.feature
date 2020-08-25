@@ -8,7 +8,7 @@ Feature: Create a new repository
             """
         Then the output is
             """
-            New repository "steve" created on "home".
+            New repository "steve" created.
 
             """
         And the repository "steve" exists on the client.

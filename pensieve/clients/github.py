@@ -64,14 +64,14 @@ class GitHubClient(ClientABC):
         ClientError
             If there is a problem while cloning.
         """
-        url = f"git@github.com/{self.user}/{name}"
+        url = f"ssh://git@github.com/{self.user}/{name}"
         command = ["git", "clone", url]
         proc = subprocess.run(
             command, cwd=str(cwd), stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         )
 
         if proc.returncode:
-            raise ClientError(name)
+            raise ClientError(proc.stdout.decode())
 
     def new(self, name, private=True):
         """Create a new repository on the store.

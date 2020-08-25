@@ -24,14 +24,10 @@ Feature: List the remote repositories
                 description: This iz baz.
                 topics: math, python, science
             foo :: github
-                description: None
-                topics: None
             bar :: home
                 description: This is bar.
                 topics: research, teaching
             baz :: home
-                description: None
-                topics: None
             foo :: home
                 description: This is foo.
                 topics: research

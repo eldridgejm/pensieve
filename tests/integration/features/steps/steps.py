@@ -66,6 +66,9 @@ def client_fixture(context):
         f"-i {DOCKER_DIRECTORY}/id_rsa"
     )
 
+    # disable color output
+    os.environ['PENSIEVE_COLOR'] = 'no'
+
     yield Client(temp_path)
 
 

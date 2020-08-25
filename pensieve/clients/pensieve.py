@@ -28,7 +28,8 @@ class PensieveClient(ClientABC):
     ---------
     host : str
         A string of the form 'ssh://<username>@<hostname_or_ip>:port' describing
-        the location of the store.
+        the location of the store. If the string doesn't start with ssh://, it
+        will be added automatically.
     path : str
         A string describing the location of the store on the filesystem of the
         remote machine.
@@ -39,6 +40,8 @@ class PensieveClient(ClientABC):
     """
 
     def __init__(self, host, path, agent):
+        if not host.startswith('ssh://'):
+            host = 'ssh://' + host
         self.host = host
         self.path = path
 
