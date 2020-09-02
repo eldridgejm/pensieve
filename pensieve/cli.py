@@ -190,6 +190,7 @@ def _fzf_select_repo():
 def cmd_clone(args):
     if args.locator is None:
         selection = _fzf_select_repo()
+        print(f'Cloning {selection}...')
         args.locator = parse_repository_locator(selection, args.clients)
 
     try:
@@ -202,6 +203,7 @@ def cmd_clone(args):
 
 def configure_list_parser(subparsers, clients):
     list_parser = subparsers.add_parser("list")
+    list_parser.add_argument('--topic', nargs='?', required=False)
     list_parser.set_defaults(cmd=cmd_list)
 
 
@@ -245,6 +247,9 @@ def cmd_list(args):
         _update_cache(store, repos_on_store)
 
         for repo in sorted(repos_on_store):
+            if args.topic is not None and args.topic not in repo.topics:
+                continue 
+
             topics = ", ".join(repo.topics)
             print(highlight(repo.name) + faded(f" :: {store}"))
 
