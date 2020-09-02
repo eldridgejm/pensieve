@@ -21,8 +21,11 @@ from .clients import GitHubClient
 HAS_FZF = bool(shutil.which('fzf'))
 
 
-_, COLUMNS = os.popen("stty size", "r").read().split()
-COLUMNS = int(COLUMNS)
+try:
+    _, COLUMNS = os.popen("stty size", "r").read().split()
+    COLUMNS = int(COLUMNS)
+except ValueError:
+    COLUMNS = 120
 
 
 CACHE_FILENAME = ".cache.json"
