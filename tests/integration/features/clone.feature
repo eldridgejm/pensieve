@@ -4,11 +4,11 @@ Feature: Clone a repository
         Given the home store has repos "foo", "bar", "baz".
         When the user invokes
             """
-            pensieve clone home foo
+            pensieve clone home:foo
             """
         Then the output is
             """
-            Cloned repository "foo".
+            Cloned repository "home:foo".
 
             """
         And the repository "foo" exists on the client.
@@ -17,7 +17,7 @@ Feature: Clone a repository
         Given the home store has repos "foo", "bar", "baz".
         When the user invokes
             """
-            pensieve clone home steve
+            pensieve clone home:steve
             """
         Then the output is
             """

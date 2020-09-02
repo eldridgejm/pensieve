@@ -82,6 +82,8 @@ class PensieveServer:
         self.container_id = container_id
 
     def run(self, cmd, check=True):
+        os.chmod(DOCKER_DIRECTORY / 'id_rsa', 0o600)
+        os.chmod(DOCKER_DIRECTORY / 'id_rsa.pub', 0o600)
         ssh_cmd = [
             "ssh",
             "-o",
