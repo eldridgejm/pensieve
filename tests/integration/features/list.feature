@@ -17,13 +17,13 @@ Feature: List the remote repositories
         # should be in alphabetical order by repository name
         #
             """
-            bar :: github
+            pensieve-test-user/bar :: github
                 description: This is the description.
                 topics: code, math, science
-            baz :: github
+            pensieve-test-user/baz :: github
                 description: This iz baz.
                 topics: math, python, science
-            foo :: github
+            pensieve-test-user/foo :: github
             bar :: home
                 description: This is bar.
                 topics: research, teaching
