@@ -28,7 +28,7 @@ def _extract_repo_info_from_json(json):
 
     """
     return RepositoryMetadata(
-        name=json["name"], description=json["description"], topics=json["topics"]
+        name=json["full_name"], description=json["description"], topics=json["topics"]
     )
 
 
@@ -48,13 +48,13 @@ class GitHubClient(ClientABC):
         self.user = user
         self.token = token
 
-    def clone(self, name, cwd):
+    def clone(self, full_name, cwd):
         """Clone the repository into the current working directory.
 
         Arguments
         ---------
-        repo_name : str
-            The name of the repository.
+        full_name : str
+            The full name of the repository, in the form of <user_or_org>/<repo_name>.
         cwd : pathlib.Path
             The path to the current working directory; the repo will be cloned to
             this directory.
@@ -64,7 +64,8 @@ class GitHubClient(ClientABC):
         ClientError
             If there is a problem while cloning.
         """
-        url = f"ssh://git@github.com/{self.user}/{name}"
+        # if a full name is not provided, assume the user is self.user
+        url = f"ssh://git@github.com/{full_name}"
         command = ["git", "clone", url]
         proc = subprocess.run(
             command, cwd=str(cwd), stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -73,13 +74,33 @@ class GitHubClient(ClientABC):
         if proc.returncode:
             raise ClientError(proc.stdout.decode())
 
-    def new(self, name, private=True):
+    def _create_new_user_repository(self, repo_name, private):
+        result = requests.post(
+            "https://api.github.com/user/repos",
+            auth=(self.user, self.token),
+            json={"name": repo_name, "private": private},
+        )
+        if result.status_code != 201:
+            raise ClientError(_make_error_message(result.json()))
+
+    def _create_new_org_repository(self, org, repo_name, private):
+        result = requests.post(
+            f"https://api.github.com/orgs/{org}/repos",
+            auth=(self.user, self.token),
+            json={"name": repo_name, "private": private},
+        )
+        if result.status_code != 201:
+            raise ClientError(_make_error_message(result.json()))
+
+    def new(self, full_name, private=True):
         """Create a new repository on the store.
 
         Arguments
         ---------
-        repo_name : str
-            The name of the repository.
+        full_name : str
+            The full name of the repository, in the form of <user_or_org>/<repo_name>.
+        private : bool
+            Whether the repo should be private or public. Default: True (private)
 
         Raises
         ------
@@ -87,13 +108,12 @@ class GitHubClient(ClientABC):
             If there is a problem while creating a new repository..
 
         """
-        result = requests.post(
-            "https://api.github.com/user/repos",
-            auth=(self.user, self.token),
-            json={"name": name, "private": private},
-        )
-        if result.status_code != 201:
-            raise ClientError(_make_error_message(result.json()))
+        user_or_org, repo_name = full_name.split('/')
+
+        if user_or_org == self.user:
+            self._create_new_user_repository(repo_name, private)
+        else:
+            self._create_new_org_repository(user_or_org, repo_name, private)
 
     def list(self):
         """List all of the repositories on the store.
@@ -117,7 +137,7 @@ class GitHubClient(ClientABC):
             if not results.json():
                 break
 
-            repos_on_page = [_extract_repo_info_from_json(r) for r in results.json()]
+            repos_on_page = [_extract_repo_info_from_json(r) for r in results.json() if not r['archived']]
             repos.extend(repos_on_page)
 
         return repos
