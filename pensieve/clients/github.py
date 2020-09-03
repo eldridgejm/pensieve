@@ -126,6 +126,10 @@ class GitHubClient(ClientABC):
 
         """
         repos = []
+
+        def is_admin(r):
+            return r['permissions']['admin']
+
         for page in itertools.count(1):
             # must have the right Accept header to get topics
             results = requests.get(
@@ -137,7 +141,7 @@ class GitHubClient(ClientABC):
             if not results.json():
                 break
 
-            repos_on_page = [_extract_repo_info_from_json(r) for r in results.json()]
+            repos_on_page = [_extract_repo_info_from_json(r) for r in results.json() if is_admin(r)]
             repos.extend(repos_on_page)
 
         return repos
