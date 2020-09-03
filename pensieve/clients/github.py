@@ -137,7 +137,7 @@ class GitHubClient(ClientABC):
             if not results.json():
                 break
 
-            repos_on_page = [_extract_repo_info_from_json(r) for r in results.json() if not r['archived']]
+            repos_on_page = [_extract_repo_info_from_json(r) for r in results.json()]
             repos.extend(repos_on_page)
 
         return repos

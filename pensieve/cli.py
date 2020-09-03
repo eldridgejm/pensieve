@@ -204,6 +204,7 @@ def cmd_clone(args):
 def configure_list_parser(subparsers, clients):
     list_parser = subparsers.add_parser("list")
     list_parser.add_argument('--topic', nargs='?', required=False)
+    list_parser.add_argument('--show-archived', action='store_true')
     list_parser.set_defaults(cmd=cmd_list)
 
 
@@ -249,6 +250,9 @@ def cmd_list(args):
         for repo in sorted(repos_on_store):
             if args.topic is not None and args.topic not in repo.topics:
                 continue 
+
+            if 'archived' in repo.topics and not args.show_archived:
+                continue
 
             topics = ", ".join(repo.topics)
             print(highlight(repo.name) + faded(f" :: {store}"))
