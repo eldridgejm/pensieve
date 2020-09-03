@@ -68,7 +68,10 @@ class GitHubClient(ClientABC):
         url = f"ssh://git@github.com/{full_name}"
         command = ["git", "clone", url]
         proc = subprocess.run(
-            command, cwd=str(cwd), stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            command,
+            cwd=str(cwd),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
         )
 
         if proc.returncode:
@@ -108,7 +111,7 @@ class GitHubClient(ClientABC):
             If there is a problem while creating a new repository..
 
         """
-        user_or_org, repo_name = full_name.split('/')
+        user_or_org, repo_name = full_name.split("/")
 
         if user_or_org == self.user:
             self._create_new_user_repository(repo_name, private)
@@ -128,7 +131,7 @@ class GitHubClient(ClientABC):
         repos = []
 
         def is_admin(r):
-            return r['permissions']['admin']
+            return r["permissions"]["admin"]
 
         for page in itertools.count(1):
             # must have the right Accept header to get topics
@@ -141,7 +144,9 @@ class GitHubClient(ClientABC):
             if not results.json():
                 break
 
-            repos_on_page = [_extract_repo_info_from_json(r) for r in results.json() if is_admin(r)]
+            repos_on_page = [
+                _extract_repo_info_from_json(r) for r in results.json() if is_admin(r)
+            ]
             repos.extend(repos_on_page)
 
         return repos

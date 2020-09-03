@@ -8,4 +8,4 @@ DATE_FORMAT = "%Y-%m-%d"
 HIGHLIGHT = "__"
 
 # name of the file used to read a pensieve configuration
-DOTFILE = '.pensieve.yaml'
+DOTFILE = ".pensieve.yaml"

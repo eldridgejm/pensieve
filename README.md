@@ -65,4 +65,4 @@ The Cache
 Whenever `pensieve list` is invoked, all information about the repositories
 discovered is stored in `.cache.json` in the same directory as `.pensieve.yaml`.
 This cache is used to provide autocompletion. If the cache is found to be
-out-of-date, `pensieve list` will update it.
+out-of-date, running `pensieve list` will update it.

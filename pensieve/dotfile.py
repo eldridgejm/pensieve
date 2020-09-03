@@ -29,25 +29,22 @@ def _load_client_from_store_config(store, store_config):
     """
     invalid_store_msg = f'Invalid "{store}" definition in dotfile. '
     try:
-        type_ = store_config['type']
+        type_ = store_config["type"]
     except KeyError:
         raise Error(invalid_store_msg + 'Missing a "type" key.')
 
     try:
-        Client = {
-            'github': GitHubClient,
-            'pensieve': PensieveClient
-        }[type_]
+        Client = {"github": GitHubClient, "pensieve": PensieveClient}[type_]
     except KeyError:
-        raise Error(invalid_store_msg + f'Unknown client type {type_}.')
+        raise Error(invalid_store_msg + f"Unknown client type {type_}.")
 
     # remove type; it isn't needed to create client
-    del store_config['type']
+    del store_config["type"]
 
     try:
         client = Client(**store_config)
     except Exception:
-        raise Error(invalid_store_msg + f'Missing or unknown parameters.')
+        raise Error(invalid_store_msg + f"Missing or unknown parameters.")
 
     return client
 
@@ -74,12 +71,12 @@ def load(fileobj):
     try:
         config = yaml.load(fileobj, Loader=yaml.Loader)
     except Exception:
-        raise Error('Problem decoding the YAML dotfile.')
+        raise Error("Problem decoding the YAML dotfile.")
 
     clients = {}
 
     try:
-        stores = config['stores']
+        stores = config["stores"]
     except KeyError:
         raise Error('Invalid dotfile. Missing "stores" key.')
 

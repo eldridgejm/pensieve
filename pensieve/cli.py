@@ -18,7 +18,7 @@ from . import exceptions, settings, dotfile
 from .clients import GitHubClient
 
 
-HAS_FZF = bool(shutil.which('fzf'))
+HAS_FZF = bool(shutil.which("fzf"))
 
 
 try:
@@ -152,13 +152,15 @@ def cmd_new(args):
     # inferred to be the authenticated user used to configure the store.
     args.locator.client.new(args.locator.full_name)
 
-    print(f'New repository "{args.locator.store_name}:{args.locator.full_name}" created.')
+    print(
+        f'New repository "{args.locator.store_name}:{args.locator.full_name}" created.'
+    )
     args.locator.client.clone(args.locator.full_name, pathlib.Path.cwd())
 
 
 def configure_clone_parser(subparsers, clients):
     if HAS_FZF:
-        nargs = '?'
+        nargs = "?"
     else:
         nargs = 1
 
@@ -167,7 +169,7 @@ def configure_clone_parser(subparsers, clients):
         "locator",
         type=RepositoryLocator(clients),
         help="The store to clone from.",
-        nargs=nargs
+        nargs=nargs,
     )
     help_msg = """
         Repository locator. Format: <store_name>:<full_repo_name>.
@@ -183,14 +185,16 @@ def _fzf_select_repo():
     cache = _read_cache()
     names = _cached_names(cache)
 
-    result = subprocess.run('fzf', input='\n'.join(names).encode(), stdout=subprocess.PIPE)
+    result = subprocess.run(
+        "fzf", input="\n".join(names).encode(), stdout=subprocess.PIPE
+    )
     return result.stdout.decode().strip()
 
 
 def cmd_clone(args):
     if args.locator is None:
         selection = _fzf_select_repo()
-        print(f'Cloning {selection}...')
+        print(f"Cloning {selection}...")
         args.locator = parse_repository_locator(selection, args.clients)
 
     try:
@@ -198,13 +202,17 @@ def cmd_clone(args):
     except exceptions.ClientError as exc:
         fatal_error(str(exc))
     else:
-        print(good(f'Cloned repository "{args.locator.store_name}:{args.locator.full_name}".'))
+        print(
+            good(
+                f'Cloned repository "{args.locator.store_name}:{args.locator.full_name}".'
+            )
+        )
 
 
 def configure_list_parser(subparsers, clients):
     list_parser = subparsers.add_parser("list")
-    list_parser.add_argument('--topic', nargs='?', required=False)
-    list_parser.add_argument('--show-archived', action='store_true')
+    list_parser.add_argument("--topic", nargs="?", required=False)
+    list_parser.add_argument("--show-archived", action="store_true")
     list_parser.set_defaults(cmd=cmd_list)
 
 
@@ -249,9 +257,9 @@ def cmd_list(args):
 
         for repo in sorted(repos_on_store):
             if args.topic is not None and args.topic not in repo.topics:
-                continue 
+                continue
 
-            if 'archived' in repo.topics and not args.show_archived:
+            if "archived" in repo.topics and not args.show_archived:
                 continue
 
             topics = ", ".join(repo.topics)
