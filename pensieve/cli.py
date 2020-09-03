@@ -337,7 +337,11 @@ def main():
     except FileNotFoundError:
         fatal_error("Pensieve dotfile not found. Is this a pensieve?")
 
-    parser = argparse.ArgumentParser()
+    description = """
+        Create, clone, and list git repositories hosted elsewhere.
+    """
+
+    parser = argparse.ArgumentParser(description=description)
     parser.set_defaults(cwd=pathlib.Path.cwd(), clients=clients)
     subparsers = parser.add_subparsers()
 
