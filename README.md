@@ -4,7 +4,7 @@ pensieve
 A tool to manage your git repositories.
 
 Pensieve can create, clone, and search git repositories, whether they are hosted
-on GitHub or on a remote server running pensieve-agent.
+on GitHub or on a remote server (using [pensieve-agent](https://github.com/eldridgejm/pensieve-agent)).
 
 
 Configuration
