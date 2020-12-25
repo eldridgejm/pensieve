@@ -18,6 +18,9 @@ from . import exceptions, settings, dotfile
 from .clients import GitHubClient
 
 
+DEFAULT_CONFIG_PATH = pathlib.Path.home() / '.config/pensieve/pensieve.yaml'
+
+
 HAS_FZF = bool(shutil.which('fzf'))
 
 
@@ -329,15 +332,18 @@ def cmd_cached(args):
 
 
 def main():
+    config_path = os.getenv('PENSIEVE_CONFIG', DEFAULT_CONFIG_PATH)
+
     try:
-        with (pathlib.Path.cwd() / settings.DOTFILE).open() as fileobj:
+        with pathlib.Path(config_path).open() as fileobj:
             clients = dotfile.load(fileobj)
     except exceptions.Error as exc:
         fatal_error("Error: " + str(exc))
     except FileNotFoundError:
-        fatal_error("Pensieve dotfile not found. Is this a pensieve?")
+        fatal_error(f"Pensieve dotfile not found at {config_path}.")
 
     parser = argparse.ArgumentParser()
+
     parser.set_defaults(cwd=pathlib.Path.cwd(), clients=clients)
     subparsers = parser.add_subparsers()
 

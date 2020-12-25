@@ -52,7 +52,7 @@ def client_fixture(context):
     """
     )
 
-    with (temp_path / ".pensieve.yaml").open("w") as fileobj:
+    with (temp_path / "pensieve.yaml").open("w") as fileobj:
         fileobj.write(config_yaml)
 
     # set up the client's GIT SSH settings so that no password is required
@@ -65,6 +65,9 @@ def client_fixture(context):
         f"-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "
         f"-i {DOCKER_DIRECTORY}/id_rsa"
     )
+
+    # use the config file created above
+    os.environ["PENSIEVE_CONFIG"] = str(temp_path / 'pensieve.yaml')
 
     # disable color output
     os.environ['PENSIEVE_COLOR'] = 'no'
