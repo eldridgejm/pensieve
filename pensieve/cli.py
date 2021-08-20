@@ -51,7 +51,7 @@ _RESET = "\u001b[0m"
 
 @colorizer
 def faded(message):
-    return "\u001b[30;1m" + message + _RESET
+    return _RESET + message + _RESET
 
 
 @colorizer
