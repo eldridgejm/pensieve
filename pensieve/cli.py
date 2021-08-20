@@ -22,6 +22,7 @@ from .clients import GitHubClient
 # repositories to clone with fzf
 HAS_FZF = bool(shutil.which("fzf"))
 
+DEFAULT_CONFIG_PATH = pathlib.Path.home() / '.config' / 'pensieve' / 'pensieve.yaml'
 
 # get the size of the terminal. The terminal may not exist; if not, assume a standard size.
 try:
