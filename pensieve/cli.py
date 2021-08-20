@@ -22,7 +22,13 @@ from .clients import GitHubClient
 # repositories to clone with fzf
 HAS_FZF = bool(shutil.which("fzf"))
 
-DEFAULT_CONFIG_PATH = pathlib.Path.home() / '.config' / 'pensieve' / 'pensieve.yaml'
+CONFIG_PATH = os.getenv('PENSIEVE_CONFIG_PATH',
+        pathlib.Path.home() / '.config' / 'pensieve' / 'pensieve.yaml'
+        )
+
+CACHE_PATH = os.getenv('PENSIEVE_CACHE_PATH',
+        pathlib.Path.home() / '.cache/pensieve/cache.json')
+
 
 # get the size of the terminal. The terminal may not exist; if not, assume a standard size.
 try:
@@ -276,13 +282,15 @@ def _format_meta(msg, level=0, spacer="    "):
 def _update_cache(store, repos_on_store):
     """Update the cache file with information about the repos on the store.
 
-    Creates a JSON file named `CACHE_FILENAME` in the pensieve directory. The
+    Creates a JSON file named `CACHE_PATH` in the pensieve directory. The
     file is a JSON dict whose keys are the store names. The value is a list
     of dictionaries, one for each repo, each dictionary containing attributes
     `name`, `topics`, and `description`.
 
     """
-    cache_path = pathlib.Path.cwd() / settings.CACHE_FILENAME
+    cache_path = pathlib.Path(CACHE_PATH)
+    if not cache_path.parent.is_dir():
+        cache_path.parent.mkdir(exist_ok=True, parents=True)
 
     try:
         with cache_path.open() as fileobj:
@@ -340,7 +348,7 @@ def configure_cached_parser(subparsers, clients):
 
 
 def _read_cache():
-    cache_path = pathlib.Path.cwd() / CACHE_FILENAME
+    cache_path = pathlib.Path.cwd() / CACHE_PATH
 
     try:
         with cache_path.open() as fileobj:
@@ -393,15 +401,13 @@ def cmd_cached(args):
 # =============================================================================
 
 def main():
-    config_path = os.getenv('PENSIEVE_CONFIG', DEFAULT_CONFIG_PATH)
-
     try:
-        with pathlib.Path(config_path).open() as fileobj:
+        with pathlib.Path(CONFIG_PATH).open() as fileobj:
             clients = dotfile.load(fileobj)
     except exceptions.Error as exc:
         fatal_error("Error: " + str(exc))
     except FileNotFoundError:
-        fatal_error(f"Pensieve dotfile not found at {config_path}.")
+        fatal_error(f"Pensieve dotfile not found at {CONFIG_PATH}.")
 
     description = """
         Create, clone, and list git repositories hosted elsewhere.
