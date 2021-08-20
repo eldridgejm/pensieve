@@ -34,14 +34,14 @@ class PensieveClient(ClientABC):
         A string describing the location of the store on the filesystem of the
         remote machine.
     agent : str
-        The path to the pensieve agent binary on the remote machine. If the 
+        The path to the pensieve agent binary on the remote machine. If the
         envvar PENSIEVE_AGENT_COMMAND is set, it will be used instead.
 
     """
 
     def __init__(self, host, path, agent):
-        if not host.startswith('ssh://'):
-            host = 'ssh://' + host
+        if not host.startswith("ssh://"):
+            host = "ssh://" + host
         self.host = host
         self.path = path
 
@@ -160,7 +160,10 @@ class PensieveClient(ClientABC):
             repo_name,
         ]
         proc = subprocess.run(
-            command, cwd=str(cwd), stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            command,
+            cwd=str(cwd),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
         )
 
         if proc.returncode:

@@ -1,4 +1,4 @@
-"""Command line interface."""
+"""The command line interface."""
 
 import argparse
 import collections
@@ -18,23 +18,23 @@ from . import exceptions, settings, dotfile
 from .clients import GitHubClient
 
 
-DEFAULT_CONFIG_PATH = pathlib.Path.home() / '.config/pensieve/pensieve.yaml'
+# check to see if the system has fzf installed. If it does, we will allow selecting
+# repositories to clone with fzf
+HAS_FZF = bool(shutil.which("fzf"))
 
 
-HAS_FZF = bool(shutil.which('fzf'))
-
-
+# get the size of the terminal. The terminal may not exist; if not, assume a standard size.
 try:
     _, COLUMNS = os.popen("stty size", "r").read().split()
     COLUMNS = int(COLUMNS)
 except ValueError:
     COLUMNS = 120
 
+# output formatting
+# =============================================================================
 
-CACHE_FILENAME = ".cache.json"
 
-
-def colorizer(wrapped):
+def _colorizer(wrapped):
     """Decorator to return unformatted message if PENSIEVE_COLOR is set."""
 
     def wrapper(message):
@@ -49,42 +49,67 @@ def colorizer(wrapped):
 _RESET = "\u001b[0m"
 
 
-@colorizer
+@_colorizer
 def faded(message):
     return _RESET + message + _RESET
 
 
-@colorizer
+@_colorizer
 def info(message):
     return "\u001b[35m" + message + _RESET
 
 
-@colorizer
+@_colorizer
 def info_heading(message):
     return "\u001b[34m" + message + _RESET
 
 
-@colorizer
+@_colorizer
 def highlight(message):
     return "\u001b[37;1m" + message + _RESET
 
 
-@colorizer
+@_colorizer
 def bad(message):
     return "\u001b[31m" + message + _RESET
 
 
-@colorizer
+@_colorizer
 def good(message):
     return "\u001b[32m" + message + _RESET
 
 
 def fatal_error(msg, code=1):
+    """Format a fatal error message and exit with error code."""
     print(bad(msg), file=sys.stdout)
     sys.exit(code)
 
 
+# locators
+# =============================================================================
+# a repository locator string provides all the information needed to locate
+# a repository
+
+
 def parse_repository_locator(locator_string, clients):
+    """Parse a repository locator string into pieces.
+
+    This verifies that the locator string refers to a valid store. If the store
+    is a GitHub store and the user or organization is not provided, it is
+    inferred to be the username associated with the store.
+
+    Arguments
+    ---------
+    locator_string : str
+    clients : Map[Str, Client]
+        A list of clients.
+
+    Returns
+    -------
+    location
+        A namedtuple with attributes: store_name, client, user_or_org_prefix,
+        repo_name, and full_name. The full_name can be used to clone the repository.
+    """
     try:
         store, rest = locator_string.split(":")
     except Exception:
@@ -133,6 +158,14 @@ def RepositoryLocator(clients):
 
     return checker
 
+# commands
+# =============================================================================
+
+# pensieve new
+# ------------
+# usage:
+#   pensieve new <repository_locator>
+
 
 def configure_new_parser(subparsers, clients):
     new_parser = subparsers.add_parser("new")
@@ -148,20 +181,27 @@ def configure_new_parser(subparsers, clients):
 
 
 def cmd_new(args):
-    # we must construct the repository's "full name". If the store is a GitHub
-    # store, this means including the username or organization as a prefix. The
-    # user may omit this information, in which case it is assumed that the repo
-    # will be a user repository instead of an organization repo, and the user is
-    # inferred to be the authenticated user used to configure the store.
+    """Create a new repository on a remote store."""
     args.locator.client.new(args.locator.full_name)
 
-    print(f'New repository "{args.locator.store_name}:{args.locator.full_name}" created.')
+    print(
+        f'New repository "{args.locator.store_name}:{args.locator.full_name}" created.'
+    )
     args.locator.client.clone(args.locator.full_name, pathlib.Path.cwd())
 
 
+# pensieve clone
+# --------------
+# usage:
+#   pensieve clone [repository_locator]
+#
+# if fzf is available, running pensieve clone without arguments will start fzf
+# so that the user can interactively select the repository to clone
+
 def configure_clone_parser(subparsers, clients):
+    # if fzf is available, we make the 
     if HAS_FZF:
-        nargs = '?'
+        nargs = "?"
     else:
         nargs = 1
 
@@ -170,7 +210,7 @@ def configure_clone_parser(subparsers, clients):
         "locator",
         type=RepositoryLocator(clients),
         help="The store to clone from.",
-        nargs=nargs
+        nargs=nargs,
     )
     help_msg = """
         Repository locator. Format: <store_name>:<full_repo_name>.
@@ -183,17 +223,21 @@ def configure_clone_parser(subparsers, clients):
 
 
 def _fzf_select_repo():
+    """Open fzf and select a repo from the cache."""
     cache = _read_cache()
     names = _cached_names(cache)
 
-    result = subprocess.run('fzf', input='\n'.join(names).encode(), stdout=subprocess.PIPE)
+    result = subprocess.run(
+        "fzf", input="\n".join(names).encode(), stdout=subprocess.PIPE
+    )
     return result.stdout.decode().strip()
 
 
 def cmd_clone(args):
+    """Clone a remote repository."""
     if args.locator is None:
         selection = _fzf_select_repo()
-        print(f'Cloning {selection}...')
+        print(f"Cloning {selection}...")
         args.locator = parse_repository_locator(selection, args.clients)
 
     try:
@@ -201,13 +245,21 @@ def cmd_clone(args):
     except exceptions.ClientError as exc:
         fatal_error(str(exc))
     else:
-        print(good(f'Cloned repository "{args.locator.store_name}:{args.locator.full_name}".'))
+        print(
+            good(
+                f'Cloned repository "{args.locator.store_name}:{args.locator.full_name}".'
+            )
+        )
 
+# pensieve list
+# -------------
+# usage:
+#   pensieve list [--topic <topic>] [--show-archived]
 
 def configure_list_parser(subparsers, clients):
     list_parser = subparsers.add_parser("list")
-    list_parser.add_argument('--topic', nargs='?', required=False)
-    list_parser.add_argument('--show-archived', action='store_true')
+    list_parser.add_argument("--topic", nargs="?", required=False)
+    list_parser.add_argument("--show-archived", action="store_true")
     list_parser.set_defaults(cmd=cmd_list)
 
 
@@ -229,7 +281,7 @@ def _update_cache(store, repos_on_store):
     `name`, `topics`, and `description`.
 
     """
-    cache_path = pathlib.Path.cwd() / CACHE_FILENAME
+    cache_path = pathlib.Path.cwd() / settings.CACHE_FILENAME
 
     try:
         with cache_path.open() as fileobj:
@@ -252,9 +304,9 @@ def cmd_list(args):
 
         for repo in sorted(repos_on_store):
             if args.topic is not None and args.topic not in repo.topics:
-                continue 
+                continue
 
-            if 'archived' in repo.topics and not args.show_archived:
+            if "archived" in repo.topics and not args.show_archived:
                 continue
 
             topics = ", ".join(repo.topics)
@@ -273,6 +325,12 @@ def cmd_list(args):
                     _format_meta(f"{info_heading('topics')}: {info(topics)}", level=1)
                 )
 
+# pensieve cached
+# ---------------
+# query the pensieve cache
+
+# usage:
+#   pensieve cached {stores, topics, names}
 
 def configure_cached_parser(subparsers, clients):
     cached_parser = subparsers.add_parser("cached")
@@ -330,6 +388,8 @@ def cmd_cached(args):
 
     sys.exit()
 
+# main
+# =============================================================================
 
 def main():
     config_path = os.getenv('PENSIEVE_CONFIG', DEFAULT_CONFIG_PATH)
@@ -342,8 +402,11 @@ def main():
     except FileNotFoundError:
         fatal_error(f"Pensieve dotfile not found at {config_path}.")
 
-    parser = argparse.ArgumentParser()
+    description = """
+        Create, clone, and list git repositories hosted elsewhere.
+    """
 
+    parser = argparse.ArgumentParser(description=description)
     parser.set_defaults(cwd=pathlib.Path.cwd(), clients=clients)
     subparsers = parser.add_subparsers()
 

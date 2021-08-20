@@ -70,7 +70,7 @@ def client_fixture(context):
     os.environ["PENSIEVE_CONFIG"] = str(temp_path / 'pensieve.yaml')
 
     # disable color output
-    os.environ['PENSIEVE_COLOR'] = 'no'
+    os.environ["PENSIEVE_COLOR"] = "no"
 
     yield Client(temp_path)
 
@@ -85,8 +85,8 @@ class PensieveServer:
         self.container_id = container_id
 
     def run(self, cmd, check=True):
-        os.chmod(DOCKER_DIRECTORY / 'id_rsa', 0o600)
-        os.chmod(DOCKER_DIRECTORY / 'id_rsa.pub', 0o600)
+        os.chmod(DOCKER_DIRECTORY / "id_rsa", 0o600)
+        os.chmod(DOCKER_DIRECTORY / "id_rsa.pub", 0o600)
         ssh_cmd = [
             "ssh",
             "-o",
